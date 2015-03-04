@@ -1047,7 +1047,7 @@ class Environment(CompartmentList):
                     "placeMethod": {"name":"placeMethod","value":"jitter","values":self.listPlaceMethod,"default":"placeMethod","type":"liste","description":"     Overriding Packing Method = ","width":30},
                     "use_gradient":{"name":"use_gradient","value":False,"default":False,"type":"bool","description":"Use gradients if defined","width":150},
                     "gradients":{"name":"gradients","value":"","values":[],"default":"","type":"liste","description":"Gradients available","width":150},
-                    "innerGridMethod": {"name":"innerGridMethod","value":"bhtree","values":["bhtree","sdf","jordan","jordan3","pyray","floodfill"],"default":"innerGridMethod","type":"liste","description":"     Method to calculate the inner grid:","width":30},
+                    "innerGridMethod": {"name":"innerGridMethod","value":"bhtree","values":["bhtree","sdf","jordan","jordan3","pyray","floodfill", "floodfill_caroline"],"default":"innerGridMethod","type":"liste","description":"     Method to calculate the inner grid:","width":30},
                     "overwritePlaceMethod":{"name":"overwritePlaceMethod","value":False,"default":False,"type":"bool","description":"Overwrite per-ingredient packing method with Overriding Packing Method:","width":300},
                     "saveResult": {"name":"saveResult","value":False,"default":False,"type":"bool","description":"Save packing result to .apr file (enter full path below):","width":200},
                     "resultfile": {"name":"resultfile","value":"fillResult","default":"fillResult","type":"filename","description":"result filename","width":200},
@@ -1745,6 +1745,8 @@ class Environment(CompartmentList):
             from autopack.Grid import Grid    
         if self.innerGridMethod == "floodfill" :
             from autopack.Environment import Grid
+        if self.innerGridMethod == "floodfill_caroline" :
+            from autopack.Environment import Grid
         #check viewer, and setup the progress bar               
         self.reportprogress(label="Building the Master Grid")
         if self.smallestProteinSize == 0 :
@@ -1888,7 +1890,9 @@ class Environment(CompartmentList):
             elif self.innerGridMethod == "pyray" and compartment.isOrthogonalBoudingBox!=1:  # surfaces and interiors will be subtracted from it as normal!
                 a, b = compartment.BuildGrid_pyray(self)  
             elif self.innerGridMethod == "floodfill" and compartment.isOrthogonalBoudingBox!=1:  # surfaces and interiors will be subtracted from it as normal!
-                a, b = compartment.BuildGrid_kevin(self)                  
+                a, b = compartment.BuildGrid_kevin(self)
+            elif self.innerGridMethod == "floodfill_caroline" and compartment.isOrthogonalBoudingBox!=1:  # surfaces and interiors will be subtracted from it as normal!
+                a, b = compartment.BuildGrid_caroline(self)                  
             aInteriorGrids.append(a)
             print("I'm ruther in the loop")
             aSurfaceGrids.append(b)
