@@ -3327,6 +3327,122 @@ class  Compartment(CompartmentList):
 
         return insidePoints, surfacePoints
 
+    def getSurfaceInnerPoints_megan(self, boundingBox, spacing, display = True):
+        """
+        Takes a polyhedron, and builds a grid. In this grid:
+            - Projects the polyhedron to the grid.
+            - Determines which points are inside/outside the polyhedron
+            - Determines point's distance to the polyhedron.
+        superFine provides the option doing a super leakproof test when determining
+        which points are inside or outside. Instead of raycasting to nearby faces to 
+        determine inside/outside, setting this setting to true will foce the algorithm
+        to raycast to the entire polyhedron. This usually not necessary, because the
+        built-in algorithm has no known leakage cases, even in extreme edge cases.
+        It is simply there as a safeguard.
+        """
+#        from autopack.Environment import Grid
+#        if self.grid_type == "halton" :
+#            from autopack.Grid import HaltonGrid as Grid
+#        else :
+#            from autopack.Grid import Grid         
+        from autopack.Environment import Grid  
+        from autopack.Grid import gridPoint
+        import sys
+        from caroline import boundedboxes
+        from caroline import DataStructures
+
+        # Start the timer.
+        from time import time
+        startTime = time()
+        
+        gridSpacing = spacing
+        radius = gridSpacing
+
+        # Make a copy of faces, vertices, and vnormals.
+        faces = self.faces[:]
+        vertices = self.vertices[:]
+        vnormals = self.vnormals[:]
+        
+        # Get the bounding box for our polyhedron
+        corners = boundingBox
+
+        # Grid initialization referenced from getSurfaceInnerPointsJordan()
+        grid = Grid()#setup=False)
+        grid.boundingBox = boundingBox
+        grid.gridSpacing = spacing
+        grid.gridVolume, grid.nbGridPoints = grid.computeGridNumberOfPoint(boundingBox, spacing)
+        grid.create3DPointLookup()
+        points = grid.masterGridPositions
+        gridPtsPerEdge = grid.nbGridPoints # In the form [nx, ny, nz]
+
+        # Pre-allocates a gridPoint object for every single point we have in our grid.
+        # is this necessary ?
+        
+            
+        pointsList = boundedboxes.parseVerticies(vertices)
+        polygonList = boundedboxes.parseFaces(faces, pointsList)
+        outsidePts = []
+
+        b = raw_input("Enter jitter-buffer (for bounding box), hit enter for default (0.1): ")
+
+        if (len(b) == 0):
+            b = 0.1
+        else:
+            b = float(b)
+
+        # for gridPoint in gridPoints:
+        #     if (not boundedboxes.alreadyExists(gridPoint, vertices)):
+        #         outsidePts.append(arg)
+        surfacePoints = []
+        insidePoints =[]
+        pts = pointsList
+        psdptfaceDict = {}
+        BigBox, actualBoxList, psdptfaceDict = boundedboxes.runIteration(pts, polygonList, b)
+        timeFinishBoxing = time()
+        print('boxing took ' + str(time() - timeFinishBoxing) + ' seconds.')
+
+        mapping = {}
+        gridPoints = []
+        i = 0
+        for point in points: #MAKE SURE THIS SAYS 3D
+            point=DataStructures.Point(index=i, x=point[0],y=point[1],z=point[2])
+            cur = boundedboxes.get3DNearestDistToGeometryWithinBox(point, BigBox, psdptfaceDict)
+            if (cur[0][1] == None):
+                mapping[point.number] = cur[0][0], -1
+
+            else:
+                mapping[point.number] = cur[0][0], cur[0][1].number
+            
+            if cur[0][0]<0:
+                insidePoints.append([point.x, point.y, point.z])
+            elif cur[0][0]<10:
+                surfacePoints.append([point.x, point.y, point.z])
+
+            i = 1+i
+
+        # Make a precomputed cube of coordinates and corresponding distances
+        # distanceCube,distX,distY,distZ = makeMarchingCube(gridSpacing,radius)
+        # # Flatten and combine these arrays. This is easier to iterate over.
+        # distanceCubeF,distXF,distYF,distZF = distanceCube.flatten(),distX.flatten(),distY.flatten(),distZ.flatten()
+        # zippedNumbers = zip(distanceCubeF,distXF,distYF,distZF)
+
+        # NX, NY, NZ = gridPtsPerEdge
+        # OX, OY, OZ = boundingBox[0]
+        # spacing1 = 1./gridSpacing # Inverse of the spacing. We compute this here, so we don't have to recompute it repeatedly
+        # allCoordinates = [] # Tracker for all the fine coordiantes that we have interpolated for the faces of the polyhedron
+        
+        # Walk through the faces, projecting each to the grid and marking immediate neighbors so we can test said 
+        # neighbors for inside/outside later.
+        timeFinishGrid = time()
+
+        print('Assigning distance took' + str(time() - timeFinishGrid) + ' seconds.')
+        # insidePoints = [g.globalCoord for g in gridPoints if g.isOutside == False]
+        # # outsidePoints = [g.index for g in gridPoints if g.isOutside == True]
+        # surfacePoints = [g.globalCoord for g in gridPoints if g.representsPolyhedron == True]
+
+
+        return insidePoints, surfacePoints
+
     def getSurfaceInnerPoints_caroline(self, boundingBox, spacing, display = True, superFine = False):
         """
         Takes a polyhedron, and builds a grid. In this grid:

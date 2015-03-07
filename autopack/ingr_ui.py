@@ -288,7 +288,7 @@ class SphereTreeUI(uiadaptor):
                          action=self.clearPoints,type="button",icon=None,
                                      variable=self.addVariable("int",0))
 
-        self.available_mode=["bhtree_dot","sdf_fixdimension","sdf_interpolate","jordan_raycast","jordan_3raycast","kevin", "caroline"]
+        self.available_mode=["bhtree_dot","sdf_fixdimension","sdf_interpolate","jordan_raycast","jordan_3raycast","kevin", "caroline", "megan"]
         self.mode=self._addElemt(name="gridify_mode",
                                     value=self.available_mode,
                                     width=180,height=10,action=None,
@@ -911,6 +911,8 @@ class SphereTreeUI(uiadaptor):
             inner, surface = o1.getSurfaceInnerPoints_kevin(bb,step,display=display)
         elif mode == "caroline": # Added to add caroline's surface/inside/outside code
             inner, surface = o1.getSurfaceInnerPoints_caroline(bb,step,display=display)
+        elif mode == "megan": # Added to add caroline's surface/inside/outside code
+            inner, surface = o1.getSurfaceInnerPoints_megan(bb,step,display=display)
 #        inner, surface = o1.getSurfaceInnerPoints(bb,step,display=display,useFix=useFix)
         n1=n=o1.name+"_innerPts"
         n2=o1.name+"_surfacePts"
