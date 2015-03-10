@@ -137,8 +137,9 @@ def makeInitialBox(ptsList, b=0.1):
 	#print str(xCenter) + " " + str(yCenter) + " " + str(zCenter)
 
 	centerpt = Point(index=-1, x=xCenter, y=yCenter, z=zCenter)
-
-	return BoundedBox(xDim + 2*b, yDim + 2*b, zDim + 2*b, centerpt)
+	bb= BoundedBox(xDim + 2*b, yDim + 2*b, zDim + 2*b, centerpt)
+	bb.pointsInside=ptsList
+	return bb
 
 """ given two boxes of the same parent, will create Psuedo Points on their newly created 
 	and shared Edge, according to the edges as defined by the REAL points in the input PTSLIST. 
@@ -318,7 +319,7 @@ def runIteration(ptsLst, plyList, b=0.1):
 def getBox(pt, startBox):
 	if (not startBox.isPtinBox(pt) or startBox == None):
 		#print "There is a problem"
-		#print "Pt must be in it's starting box"
+		print "Pt must be in it's starting box"
 		return None
 	leftBox = startBox.child1
 	rightBox = startBox.child2

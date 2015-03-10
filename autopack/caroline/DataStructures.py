@@ -167,7 +167,10 @@ def getSigned3DProj(plane, pt):
 	top = a*x + b*y + c*z + d
 	bottom = (a**2 + b**2 + c**2)**0.5
 
-	return top / bottom
+	if bottom==0: #one of the shapes I tested threw an divide by zero error here. 
+		return 0
+	else:
+		return top / bottom
 
 def getnewQprojBasis(newQ, basis):
 	top = (np.dot(basis, newQ))
@@ -655,6 +658,10 @@ class BoundedBox:
 				(between(pt.z, self.getMaxZcoord(), self.getMinZccord())) ):
 				self.pointsInside.append(pt)
 		return
+
+	def sortPoints(self, axis):
+		self.pointsInside.sort(key=lambda point: point.x, reverse=True)
+
 
 	""" Prints the points inside of the box. RUN getPointsinBox BEFORE calling this """
 	def printPoints(self):

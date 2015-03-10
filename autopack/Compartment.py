@@ -3381,7 +3381,6 @@ class  Compartment(CompartmentList):
             
         pointsList = boundedboxes.parseVerticies(vertices)
         polygonList = boundedboxes.parseFaces(faces, pointsList)
-        outsidePts = []
 
         b = raw_input("Enter jitter-buffer (for bounding box), hit enter for default (0.1): ")
 
@@ -3395,6 +3394,9 @@ class  Compartment(CompartmentList):
         #         outsidePts.append(arg)
         surfacePoints = []
         insidePoints =[]
+        outsidePoints=[]
+        unassignedPoints= []
+
         pts = pointsList
         psdptfaceDict = {}
         BigBox, actualBoxList, psdptfaceDict = boundedboxes.runIteration(pts, polygonList, b)
@@ -3413,10 +3415,14 @@ class  Compartment(CompartmentList):
             else:
                 mapping[point.number] = cur[0][0], cur[0][1].number
             
-            if cur[0][0]<0:
-                insidePoints.append([point.x, point.y, point.z])
-            elif cur[0][0]<10:
+            if abs(cur[0][0])<10:
                 surfacePoints.append([point.x, point.y, point.z])
+            elif cur[0][0]<0:
+                insidePoints.append([point.x, point.y, point.z])
+            elif cur[0][0]>=10 and cur[0][0]<100:
+                outsidePoints.append([point.x, point.y, point.z])
+            else:
+                unassignedPoints.append([point.x, point.y, point.z])
 
             i = 1+i
 
@@ -3441,7 +3447,7 @@ class  Compartment(CompartmentList):
         # surfacePoints = [g.globalCoord for g in gridPoints if g.representsPolyhedron == True]
 
 
-        return insidePoints, surfacePoints
+        return insidePoints, surfacePoints, outsidePoints, unassignedPoints
 
     def getSurfaceInnerPoints_caroline(self, boundingBox, spacing, display = True, superFine = False):
         """

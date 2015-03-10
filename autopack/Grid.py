@@ -56,6 +56,7 @@ class gridPoint:
         self.allDistances = [] # Stores a tuple list of distances to all points. (point,distance) = (5,2.5)
         self.globalCoord = numpy.array(globalC) # Stores the global coordinate associated with this point
 
+
 class Grid:
     """
     The Grid class

@@ -897,6 +897,7 @@ class SphereTreeUI(uiadaptor):
         display = self.getVal(self.rt_display)
         useFix= self.getVal(self.useFix)
         o1.grid_type=gridtype
+        outside=[]
         if mode =="bhtree_dot":
             inner, surface = o1.getSurfaceInnerPoints(bb,step,display=display,useFix=useFix)
         elif mode ==  "sdf_fixdimension":
@@ -912,16 +913,21 @@ class SphereTreeUI(uiadaptor):
         elif mode == "caroline": # Added to add caroline's surface/inside/outside code
             inner, surface = o1.getSurfaceInnerPoints_caroline(bb,step,display=display)
         elif mode == "megan": # Added to add caroline's surface/inside/outside code
-            inner, surface = o1.getSurfaceInnerPoints_megan(bb,step,display=display)
+            inner, surface, outside, unassigned= o1.getSurfaceInnerPoints_megan(bb,step,display=display)
 #        inner, surface = o1.getSurfaceInnerPoints(bb,step,display=display,useFix=useFix)
         n1=n=o1.name+"_innerPts"
         n2=o1.name+"_surfacePts"
+        n3=o1.name+"_outsidePts"
+        n4=o1.name+"_unassignedPts"
         if self.helper.host == "maya" :
             n=o1.name+"_innerPtsds"
         s = self.helper.getObject(n)
         if s is None :
-            s = self.helper.PointCloudObject(n1, vertices=inner )
-            s2 = self.helper.PointCloudObject(n2, vertices=surface )
+            s = self.helper.PointCloudObject(n1, materials=[red], vertices=inner)
+            s2 = self.helper.PointCloudObject(n2, materials=[green],vertices=surface)
+            if mode == "megan":
+                s3 = self.helper.PointCloudObject(n3,materials= [yellow], vertices=outside)
+                s4= self.helper.PointCloudObject(n4,materials= [cyan], vertices=unassigned)
         else :
             if self.helper.host == "c4d" :
                 self.helper.updateMesh(s,vertices=inner)
