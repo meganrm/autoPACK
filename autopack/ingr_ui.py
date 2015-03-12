@@ -911,7 +911,7 @@ class SphereTreeUI(uiadaptor):
         elif mode == "kevin": # Added to add Kevin's surface/inside/outside code
             inner, surface = o1.getSurfaceInnerPoints_kevin(bb,step,display=display)
         elif mode == "caroline": # Added to add caroline's surface/inside/outside code
-            inner, surface = o1.getSurfaceInnerPoints_caroline(bb,step,display=display)
+            inner, surface, outside, unassigned = o1.getSurfaceInnerPoints_caroline(bb,step,display=display)
         elif mode == "megan": # Added to add caroline's surface/inside/outside code
             inner, surface, outside, unassigned= o1.getSurfaceInnerPoints_megan(bb,step,display=display)
 #        inner, surface = o1.getSurfaceInnerPoints(bb,step,display=display,useFix=useFix)
@@ -925,8 +925,8 @@ class SphereTreeUI(uiadaptor):
         if s is None :
             s = self.helper.PointCloudObject(n1, materials=[red], vertices=inner)
             s2 = self.helper.PointCloudObject(n2, materials=[green],vertices=surface)
-            if mode == "megan":
-                s3 = self.helper.PointCloudObject(n3,materials= [yellow], vertices=outside)
+            if len(outside)>1:
+                s3 = self.helper.PointCloudObject(n3,materials= [blue], vertices=outside)
                 s4= self.helper.PointCloudObject(n4,materials= [cyan], vertices=unassigned)
         else :
             if self.helper.host == "c4d" :

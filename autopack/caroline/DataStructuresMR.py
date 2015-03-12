@@ -649,6 +649,16 @@ class BoundedBox:
 		else:
 			return -1
 
+	def setBoxType(self):
+		#i forgot the types
+		numPts = len(self.pointsInside)
+		if (numPts == 0):
+			#do not need to check for number of edges
+			self.boxType= 0
+		elif (numPts == 1):
+			self.boxType= 1
+
+
 	""" takes in a list of Point instances, resets the attribute pointsInside and then
 		will refill the list pointsInside with only the Point instances within the box.
 		Does mutation ONLY on self.pointsInside and does not return any new list or value """
@@ -950,6 +960,8 @@ class BoundedBox:
 			else:
 				leftPoints=self.pointsInside[:cut_index+1]
 				rightPoints=self.pointsInside[cut_index+1:]
+				# if self.pointsInside[cut_index] in same poly as self.pointsInside[cut_index+1]:
+				# 	make new PseudoPoint()
 		
 		return leftPoints, rightPoints
 
@@ -968,6 +980,12 @@ class BoundedBox:
 		self.child1 = leftBox
 		self.child2 = rightBox
 
+		# leftBox.getPointsinBox(self.pointsInside)
+		# rightBox.getPointsinBox(self.pointsInside)
+
+		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('x')
+
+		
 		#look at the x coordinates of the psuedo points
 		for psdpt in self.psuedoPts:
 			if (psdpt.x > self.centerpt.x): #if the x coordinate of the psuedo pt is greater than middle x
@@ -994,6 +1012,12 @@ class BoundedBox:
 		self.child1 = leftBox
 		self.child2 = rightBox
 
+		# leftBox.getPointsinBox(self.pointsInside)
+		# rightBox.getPointsinBox(self.pointsInside)
+
+		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('y')
+
+
 		for psdpt in self.psuedoPts:
 			if (psdpt.y > self.centerpt.y):
 				rightBox.psuedoPts.add(psdpt)
@@ -1017,6 +1041,12 @@ class BoundedBox:
 
 		self.child1 = leftBox
 		self.child2 = rightBox
+
+		# leftBox.getPointsinBox(self.pointsInside)
+		# rightBox.getPointsinBox(self.pointsInside)
+		
+		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('z')
+
 
 		for psdpt in self.psuedoPts:
 			if (psdpt.z > self.centerpt.z):
