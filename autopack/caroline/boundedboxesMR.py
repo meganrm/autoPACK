@@ -106,7 +106,8 @@ def readPolygons(polygonFile, ptsList):
 	return polygonList
 
 """ Make Initial Bounded Box given a list PTSLIST, with a buffer of B, default is  0.1."""
-def makeInitialBox(ptsList, b=0.1):
+def makeInitialBox(vertList, gridPoints, b=0.1):
+	ptsList=vertList+gridPoints
 	maxXcoord = ptsList[0].x
 	minXcoord = ptsList[0].x
 
@@ -138,7 +139,8 @@ def makeInitialBox(ptsList, b=0.1):
 
 	centerpt = Point(index=-1, x=xCenter, y=yCenter, z=zCenter)
 	bb= BoundedBox(xDim + 2*b, yDim + 2*b, zDim + 2*b, centerpt)
-	bb.pointsInside=ptsList
+	bb.pointsInside=vertList
+	bb.gridPointsInside=gridPoints
 	return bb
 
 """ given two boxes of the same parent, will create Psuedo Points on their newly created 
@@ -298,9 +300,9 @@ def runGetFacesinBox(boxLst, psdPtDict):
 
 """ run all the iteration, using Point instances in POINTSLIST, and faces/Polygon instances in PLYLIST,
 	constructs all bounding boxes (with initial jitter-buffer of b (default = 0.1), starting with an empty box list, return the final boxlist """
-def runIteration(ptsLst, plyList, b=0.1):
+def runIteration(vertList,gridPoints, plyList, b=0.1):
 
-	BiggestBox = makeInitialBox(ptsLst, b)
+	BiggestBox = makeInitialBox(vertList, gridPoints, b)
 
 	psdPttoFace = {}
 
@@ -309,7 +311,7 @@ def runIteration(ptsLst, plyList, b=0.1):
 	boxList = [BiggestBox]
 
 	while (moreToDo):
-		boxList, psdPttoFace, moreToDo = iterateBoxes(boxList, ptsLst, plyList, psdPttoFace)
+		boxList, psdPttoFace, moreToDo = iterateBoxes(boxList, vertList, plyList, psdPttoFace)
 
 	runGetFacesinBox(boxList, psdPttoFace)
 
@@ -370,17 +372,17 @@ def get2DNearestDistToGeometryWithinBox(pt, startBox, psdptDict):
 	Given a point instance PT, find the lowest level bounding box it belongs to and then return
 	the distance to the nearest geometry (**not necessarily*** within the box) as well as the box it is inside itself. """
 def get3DNearestDistToGeometryWithinBox(pt, startBox, psdptDict):
-	lowestLevel = getBox(pt, startBox)
+#	lowestLevel = getBox(pt, startBox)
 
-	if (type(lowestLevel) == tuple):
-		min = sys.maxint
-		for box in lowestLevel:
-			dist = box.get2DGeometry(pt, psdptDict, startBox, True)
-			if (dist < min):
-				min = dist
-		return dist, lowestLevel
+	# if (type(lowestLevel) == tuple):
+	# 	min = sys.maxint
+	# 	for box in lowestLevel:
+	# 		dist = box.get2DGeometry(pt, psdptDict, startBox, True)
+	# 		if (dist < min):
+	# 			min = dist
+	# 	return dist, lowestLevel
 
-	return lowestLevel.get3DGeometry(pt, psdptDict, startBox, True), lowestLevel
+	return startBox.get3DGeometry(pt, psdptDict, startBox, True), startBox
 
 """ dictionary which maps Psuedo Points (in tuple form, to make an immutable key) to a set of their respective Polygons. """
 psdPttoFace = {}

@@ -3398,35 +3398,58 @@ class  Compartment(CompartmentList):
         insidePoints =[]
         outsidePoints=[]
         unassignedPoints= []
-
-        pts = pointsList
+        gridPoints = boundedboxesMR.parseVerticies(points)
+        verts = pointsList
         psdptfaceDict = {}
-        BigBox, actualBoxList, psdptfaceDict = boundedboxesMR.runIteration(pts, polygonList, b)
+        BigBox, actualBoxList, psdptfaceDict = boundedboxesMR.runIteration(verts, gridPoints, polygonList, b)
         timeFinishBoxing = time()
         print('boxing took ' + str(time() - timeFinishBoxing) + ' seconds.')
 
         mapping = {}
-        gridPoints = []
-        i = 0
-        for point in points: #MAKE SURE THIS SAYS 3D
-            point=DataStructuresMR.Point(index=i, x=point[0],y=point[1],z=point[2])
-            cur = boundedboxesMR.get3DNearestDistToGeometryWithinBox(point, BigBox, psdptfaceDict)
-            if (cur[0][1] == None):
-                mapping[point.number] = cur[0][0], -1
 
+        for box in actualBoxList:
+            if box.boxType ==0:
+                pass
+                # if len(box.gridPointsInside)!= 0:
+                #     point = box.gridPointsInside[0]
             else:
-                mapping[point.number] = cur[0][0], cur[0][1].number
+                for point in box.gridPointsInside:
+                    cur= boundedboxesMR.get3DNearestDistToGeometryWithinBox(point, box, psdptfaceDict)
+                    if (cur[0][1] == None):
+                        mapping[point.number] = cur[0][0], -1
+                    else:
+                        mapping[point.number] = cur[0][0], cur[0][1].number
+
+                    if abs(cur[0][0])<10:
+                        surfacePoints.append([point.x, point.y, point.z])
+                    elif cur[0][0]<0:
+                        insidePoints.append([point.x, point.y, point.z])
+                    elif cur[0][0]>=10 and cur[0][0]<100:
+                        outsidePoints.append([point.x, point.y, point.z])
+                    else:
+                        unassignedPoints.append([point.x, point.y, point.z])
+
+
+        # i = 0
+        # for point in points: #MAKE SURE THIS SAYS 3D
+        #     point=DataStructuresMR.Point(index=i, x=point[0],y=point[1],z=point[2])
+        #     cur = boundedboxesMR.get3DNearestDistToGeometryWithinBox(point, BigBox, psdptfaceDict)
+        #     if (cur[0][1] == None):
+        #         mapping[point.number] = cur[0][0], -1
+
+        #     else:
+        #         mapping[point.number] = cur[0][0], cur[0][1].number
             
-            if abs(cur[0][0])<10:
-                surfacePoints.append([point.x, point.y, point.z])
-            elif cur[0][0]<0:
-                insidePoints.append([point.x, point.y, point.z])
-            elif cur[0][0]>=10 and cur[0][0]<100:
-                outsidePoints.append([point.x, point.y, point.z])
-            else:
-                unassignedPoints.append([point.x, point.y, point.z])
+        #     if abs(cur[0][0])<10:
+        #         surfacePoints.append([point.x, point.y, point.z])
+        #     elif cur[0][0]<0:
+        #         insidePoints.append([point.x, point.y, point.z])
+        #     elif cur[0][0]>=10 and cur[0][0]<100:
+        #         outsidePoints.append([point.x, point.y, point.z])
+        #     else:
+        #         unassignedPoints.append([point.x, point.y, point.z])
 
-            i = 1+i
+        #     i = 1+i
 
         # Make a precomputed cube of coordinates and corresponding distances
         # distanceCube,distX,distY,distZ = makeMarchingCube(gridSpacing,radius)

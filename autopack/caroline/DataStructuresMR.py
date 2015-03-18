@@ -579,6 +579,7 @@ class BoundedBox:
 		self.facesInside = set()
 # i think boxtype should be an attribute of the box. 
 		self.boxType=-1 
+		self.gridPointsInside=[]
 
 	def getTopRight(self):
 		return (self.getMaxXcoord(), self.getMaxYcoord(), self.getMaxZcoord())
@@ -654,7 +655,10 @@ class BoundedBox:
 		numPts = len(self.pointsInside)
 		if (numPts == 0):
 			#do not need to check for number of edges
-			self.boxType= 0
+			if len(self.psuedoPts)==0:
+				self.boxType= 0
+			else:
+				self.boxType=1
 		elif (numPts == 1):
 			self.boxType= 1
 
@@ -674,6 +678,9 @@ class BoundedBox:
 
 	def sortPoints(self, axis):
 		self.pointsInside.sort(key=lambda point: point.__dict__[axis], reverse=False)
+
+	def sortGridPoints(self, axis):
+		self.gridPointsInside.sort(key=lambda point: point.__dict__[axis], reverse=False)
 
 	""" Prints the points inside of the box. RUN getPointsinBox BEFORE calling this """
 	def printPoints(self):
@@ -812,8 +819,8 @@ class BoundedBox:
 		------------> to implement: return a SIGNED distance, negative if inside, positive if outside. """
 	def get3DGeometry(self, inputPt, psdptDict, startBox, checkOutside):
 		myfaces = set()
-		if (self.child1 != None): #no children
-			self.getFacesinBox(psdptDict)
+		# if (self.child1 != None): #no children
+		# 	self.getFacesinBox(psdptDict)
 
 		distances = {}
 		runningMin = sys.maxint #MUST be positive
@@ -929,11 +936,15 @@ class BoundedBox:
 		else:
 			return self.spliceBoxAlongZ()
 
+
+	"""takes the vertex list and sorts them into the two newly made child boxes using a binary search to find the pair of vertices that
+	lie on either side of the split value"""
 	def splitPoints(self, axis):
 		self.sortPoints(axis)
 		max_index= len(self.pointsInside)-1
 		leftPoints=[]
 		rightPoints=[]
+
 		if len(self.pointsInside) <=1:
 			raise Exception( "shouldn't be spliting this box")
 
@@ -943,11 +954,12 @@ class BoundedBox:
 		#if all the points are above the cutpoint
 		elif self.pointsInside[0].__dict__[axis] > self.centerpt.__dict__[axis]:
 			rightPoints=self.pointsInside
-		
+
 		#if there are exactly 2 points, each on either side of the cutpoint
 		elif len(self.pointsInside) ==2:
 			leftPoints.append(self.pointsInside[0])
 			rightPoints.append(self.pointsInside[1])
+
 
 		else:
 		#binary search for the index of the last point below the cutpoint
@@ -962,8 +974,44 @@ class BoundedBox:
 				rightPoints=self.pointsInside[cut_index+1:]
 				# if self.pointsInside[cut_index] in same poly as self.pointsInside[cut_index+1]:
 				# 	make new PseudoPoint()
+
 		
 		return leftPoints, rightPoints
+
+	def splitGridPoints(self, axis):
+		self.sortGridPoints(axis)
+		max_index= len(self.gridPointsInside)-1
+		leftPoints=[]
+		rightPoints=[]
+		if max_index>=0:
+			#if all the points are below the cutpoint
+			if self.gridPointsInside[max_index].__dict__[axis] < self.centerpt.__dict__[axis]:
+				leftPoints=self.gridPointsInside
+			#if all the points are above the cutpoint
+			elif self.gridPointsInside[0].__dict__[axis] > self.centerpt.__dict__[axis]:
+				rightPoints=self.gridPointsInside
+			
+			#if there are exactly 2 points, each on either side of the cutpoint
+			elif len(self.gridPointsInside) ==2:
+				leftPoints.append(self.gridPointsInside[0])
+				rightPoints.append(self.gridPointsInside[1])
+
+			else:
+			#binary search for the index of the last point below the cutpoint
+				cut_index=bs.binary_search(self.gridPointsInside, self.centerpt.__dict__[axis], axis)
+			#if the point lies on the cutting line, add point to both sides
+				if self.gridPointsInside[cut_index].__dict__[axis] == self.centerpt.__dict__[axis]:
+					leftPoints=self.gridPointsInside[:cut_index+1]
+					rightPoints=self.gridPointsInside[cut_index:]
+
+				else:
+					leftPoints=self.gridPointsInside[:cut_index+1]
+					rightPoints=self.gridPointsInside[cut_index+1:]
+					# if self.pointsInside[cut_index] in same poly as self.pointsInside[cut_index+1]:
+					# 	make new PseudoPoint()
+		
+		return leftPoints, rightPoints
+
 
 
 	def spliceBoxAlongX(self):
@@ -983,14 +1031,17 @@ class BoundedBox:
 		# leftBox.getPointsinBox(self.pointsInside)
 		# rightBox.getPointsinBox(self.pointsInside)
 
-		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('x')
+		leftBox.pointsInside, rightBox.pointsInside = self.splitPoints('x')
+		leftBox.gridPointsInside, rightBox.gridPointsInside= self.splitGridPoints('x')
 
-		
+
 		#look at the x coordinates of the psuedo points
 		for psdpt in self.psuedoPts:
+
 			if (psdpt.x > self.centerpt.x): #if the x coordinate of the psuedo pt is greater than middle x
 				#add the psuedo pt to the right box
 				rightBox.psuedoPts.add(psdpt)
+
 			elif (psdpt.x < self.centerpt.x): #if x coor is less than x coor of center pt, add psd pt to leftBox
 				leftBox.psuedoPts.add(psdpt)
 			else: #otherwise, the x coor of the psd pt is equal to the x coor of the center pt
@@ -1016,6 +1067,7 @@ class BoundedBox:
 		# rightBox.getPointsinBox(self.pointsInside)
 
 		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('y')
+		leftBox.gridPointsInside, rightBox.gridPointsInside= self.splitGridPoints('y')
 
 
 		for psdpt in self.psuedoPts:
@@ -1046,6 +1098,8 @@ class BoundedBox:
 		# rightBox.getPointsinBox(self.pointsInside)
 		
 		leftBox.pointsInside, rightBox.pointsInside= self.splitPoints('z')
+		leftBox.gridPointsInside, rightBox.gridPointsInside= self.splitGridPoints('z')
+
 
 
 		for psdpt in self.psuedoPts:
